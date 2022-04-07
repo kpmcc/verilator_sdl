@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <SDL.h>
 #include <verilated.h>
+#include <verilated_vcd_c.h>
 #include "Vtop_square.h"
 
 // screen dimensions
@@ -14,8 +15,15 @@ typedef struct Pixel {
   uint8_t r;
 } Pixel;
 
+double sc_time_stamp() { return 0; }
+vluint64_t main_time = 0;
+
+#define MAX_SIM_TIME 100000000
+
 int main (int argc, char * argv[]) {
   Verilated::commandArgs(argc, argv);
+  Verilated::traceEverOn(false);
+  //VerilatedVcdC *m_trace = new VerilatedVcdC;
 
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     printf("SDL init failed.\n");
@@ -60,6 +68,8 @@ int main (int argc, char * argv[]) {
   }
 
   Vtop_square * top = new Vtop_square;
+  //top->trace(m_trace, 1);
+  //m_trace->open("waveform.vcd");
 
   top->rst = 1;
   top->clk_pix = 0;
@@ -69,7 +79,8 @@ int main (int argc, char * argv[]) {
 
   uint64_t frame_count = 0;
   uint64_t start_ticks = SDL_GetPerformanceCounter();
-  while (1) {
+  while (main_time < MAX_SIM_TIME) {
+    main_time++;
     top->clk_pix = 1;
     top->eval();
     top->clk_pix = 0;
@@ -97,6 +108,8 @@ int main (int argc, char * argv[]) {
       SDL_RenderPresent(sdl_renderer);
       frame_count++;
     }
+
+    //m_trace->dump(main_time);
   }
   uint64_t end_ticks = SDL_GetPerformanceCounter();
   double duration = ((double)(end_ticks-start_ticks))/SDL_GetPerformanceFrequency();
@@ -104,6 +117,7 @@ int main (int argc, char * argv[]) {
   printf("Frames per second: %.1f\n", fps);
 
   top->final();
+  //m_trace->close();
   SDL_DestroyTexture(sdl_texture);
   SDL_DestroyRenderer(sdl_renderer);
   SDL_DestroyWindow(sdl_window);

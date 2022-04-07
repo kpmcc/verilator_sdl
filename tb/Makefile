@@ -9,7 +9,7 @@ square: square.mk
 	make -C ./obj_dir -f Vtop_$<
 
 square.mk: ${IDIR}/top_square.sv
-	verilator -I${IDIR} -cc $< --exe main_square.cpp -o square \
+	verilator -I${IDIR} -cc $< --trace --exe main_square.cpp -o square \
 		-CFLAGS "${SDL_CFLAGS}" -LDFLAGS "${SDL_LDFLAGS}"
 
 clean:

@@ -1,3 +1,5 @@
+`timescale 1ns/1ns
+
 module simple_480p (
   input wire logic clk_pix,
   input wire logic rst,
