@@ -2,6 +2,7 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import Timer, RisingEdge
+from cocotb.regression import TestFactory
 from cocotb.result import TestFailure, TestSuccess
 
 
@@ -43,10 +44,10 @@ class display_controller(object):
         self.dut.rd_y.value = y
         await RisingEdge(self.clk)
         await RisingEdge(self.clk)
-        print("Time is %d" % cocotb.utils.get_sim_time())
-        c = self.dut.rc.value
+        # print("Time is %d" % cocotb.utils.get_sim_time())
+        c = self.dut.rd_c.value
         print("rc has value %d" % int(c))
-        return c
+        return int(c)
 
     @cocotb.coroutine
     async def flip_display(self):
@@ -60,15 +61,26 @@ class display_controller(object):
 
 
 @cocotb.test()
-async def first_test(dut):
+async def first_test(dut, color_index=0):
     dc = display_controller(dut)
     await dc.startup()
 
     pixel_X = 5
     pixel_Y = 5
-    color_index = 4
+    ci = color_index
     await dc.write_pixel(pixel_X, pixel_Y, color_index)
     await dc.flip_display()
     pixel_color = await dc.read_pixel(pixel_X, pixel_Y)
+    print(pixel_color)
+    print(type(pixel_color))
+    if pixel_color == ci:
+        raise TestSuccess()
+    else:
+        raise TestFailure("pixel color isn't 4")
     await RisingEdge(dut.clk)
     print("Pixel color is: %s" % str(pixel_color))
+
+
+tf = TestFactory(test_function=first_test)
+tf.add_option(name="color_index", optionlist=list(range(0, 16)))
+tf.generate_tests()

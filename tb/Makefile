@@ -10,7 +10,7 @@ square: square.mk
 
 square.mk: ${IDIR}/top_square.sv
 	verilator -I${IDIR} -cc $< --trace --exe main_square.cpp -o square \
-		-CFLAGS "${SDL_CFLAGS}" -LDFLAGS "${SDL_LDFLAGS}"
+		-CFLAGS "-g ${SDL_CFLAGS}" -LDFLAGS "${SDL_LDFLAGS}"
 
 clean:
 	rm -rf ./obj_dir

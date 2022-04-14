@@ -24,6 +24,53 @@ module top_square #
 
    logic[3:0] color_memory[0:DISP_HEIGHT-1][0:DISP_WIDTH-1];
 
+   logic      display_flip;
+
+
+   logic [8:0] dc_wx = 0;
+   logic [8:0] dc_wy = 0;
+   logic [3:0] dc_wc = 0;
+
+   logic [8:0] dc_rx;
+   logic [8:0] dc_ry;
+
+   always_comb begin
+      dc_rx = sx[8:0];
+      dc_ry = sy[8:0];
+   end
+
+   logic [3:0] dc_rc;
+
+   logic [8:0] dc_rx_del[0:1];
+   logic [8:0] dc_ry_del[0:1];
+
+   always_ff @ (posedge clk_pix) begin
+      dc_rx_del[0] <= dc_rx;
+      dc_rx_del[1] <= dc_rx_del[0];
+
+      dc_ry_del[0] <= dc_ry;
+      dc_ry_del[1] <= dc_ry_del[0];
+      end
+
+   display_controller #
+      (
+       .DISP_HEIGHT (DISP_HEIGHT),
+       .DISP_WIDTH  (DISP_HEIGHT)
+       )
+   disp_cont
+   (
+      .clk (clk_pix),
+      .display_flip(display_flip),
+      .wx (dc_wx),
+      .wy (dc_wy),
+      .wc (dc_wc),
+
+      .rx (dc_rx_del[1]),
+      .ry (dc_ry_del[1]),
+      .rc (dc_rc)
+    );
+
+
    logic [7:0] r_map[0:15];
    logic [7:0] g_map[0:15];
    logic [7:0] b_map[0:15];
@@ -102,6 +149,7 @@ simple_480p display_inst(
    .rst(rst),
    .sx(sx),
    .sy(sy),
+   .display_flip(display_flip),
    .hsync(hsync),
    .vsync(vsync),
    .de(de)
@@ -111,7 +159,6 @@ simple_480p display_inst(
 
 
 // 32 x 32 pixel square
-   logic                    q_draw;
    logic [3:0]              pixel_color_val;
    logic [CORDW-2:0]        sy_small;
 
@@ -119,16 +166,13 @@ simple_480p display_inst(
 
    always_comb begin
       sy_small = sy[8:0];
-      q_draw = (sx < 32 && sy < 32) ? 1 : 0;
-      pixel_color_val = color_memory[sy_small][sx];
-
+      //sy_small = sy;
+      //pixel_color_val = color_memory[sy_small][sx];
+      pixel_color_val = dc_rc;
    end
 
 
    always_ff @ (posedge clk_pix) begin
-      //sdl_r <= !de ? 8'h00 : (q_draw ? 8'h55 : 8'h00);
-      //sdl_g <= !de ? 8'h00 : (q_draw ? 8'h88 : 8'h88);
-      //sdl_b <= !de ? 8'h00 : (q_draw ? 8'h00 : 8'hff);
       sdl_r <= r_map[pixel_color_val];
       sdl_g <= g_map[pixel_color_val];
       sdl_b <= b_map[pixel_color_val];

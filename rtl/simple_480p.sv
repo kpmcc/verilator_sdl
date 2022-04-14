@@ -5,6 +5,7 @@ module simple_480p (
   input wire logic rst,
   output     logic [9:0] sx,
   output     logic [9:0] sy,
+  output logic display_flip,
   output logic hsync,
   output logic vsync,
   output logic de
@@ -26,6 +27,18 @@ module simple_480p (
       hsync = ~(sx >= HS_STA && sx < HS_END);
       vsync = ~(sy >= VS_STA && sy < VS_END);
       de = (sx <= HA_END && sy <= VA_END);
+    end
+
+   always_ff @ (posedge clk_pix) begin
+      if (rst) begin
+         display_flip <= 0;
+      end else begin
+         if (sx == LINE && sy == SCREEN) begin
+            display_flip <= 1;
+         end else begin
+            display_flip <= 0;
+         end
+      end
     end
 
    always_ff @ (posedge clk_pix) begin
